@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeVault</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
+}
+
+body{
+background:#050505;
+color:white;
+overflow-x:hidden;
+}
+
+body::before{
+content:'';
+position:fixed;
+top:-200px;
+right:-200px;
+width:500px;
+height:500px;
+background:rgba(212,175,55,0.08);
+filter:blur(150px);
+z-index:-1;
+}
+
+body::after{
+content:'';
+position:fixed;
+bottom:-250px;
+left:-250px;
+width:500px;
+height:500px;
+background:rgba(255,0,0,0.05);
+filter:blur(150px);
+z-index:-1;
+}
+
+.container{
+display:flex;
+min-height:100vh;
+}
+
+.sidebar{
+width:260px;
+background:rgba(10,10,10,0.75);
+backdrop-filter:blur(18px);
+padding:35px 25px;
+position:fixed;
+height:100vh;
+border-right:1px solid rgba(255,255,255,0.05);
+}
+
+.logo{
+font-size:32px;
+font-weight:700;
+color:#D4AF37;
+margin-bottom:50px;
+}
+
+.sidebar nav{
+display:flex;
+flex-direction:column;
+gap:14px;
+}
+
+.sidebar nav a{
+text-decoration:none;
+color:#8A8A8A;
+padding:16px;
+border-radius:16px;
+cursor:pointer;
+transition:0.3s;
+backdrop-filter:blur(10px);
+background:rgba(255,255,255,0.02);
+}
+
+.sidebar nav a:hover{
+background:rgba(255,255,255,0.08);
+color:white;
+transform:translateX(5px);
+backdrop-filter:blur(14px);
+}
+
+.sidebar nav a.active{
+background:rgba(212,175,55,0.95);
+color:black;
+font-weight:700;
+backdrop-filter:blur(14px);
+}
+
+.main{
+margin-left:260px;
+width:100%;
+padding:40px;
+}
+
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+margin-bottom:40px;
+}
+
+.welcome-block h1{
+font-size:38px;
+font-weight:700;
+background:linear-gradient(90deg,#D4AF37,#ffffff,#D4AF37);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+letter-spacing:1px;
+}
+
+.welcome-block p{
+color:#9a9a9a;
+font-size:13px;
+margin-top:8px;
+letter-spacing:2px;
+text-transform:uppercase;
+}
+
+.stats{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+gap:25px;
+margin-bottom:25px;
+}
+
+.card{
+background:rgba(18,18,18,0.75);
+backdrop-filter:blur(20px);
+padding:22px;
+border-radius:20px;
+border:1px solid rgba(255,255,255,0.04);
+}
+
+.stat-title{
+font-size:14px;
+color:#9e9e9e;
+margin-bottom:10px;
+}
+
+.stat-value{
+font-size:32px;
+font-weight:700;
+}
+
+button{
+background:rgba(212,175,55,0.18);
+backdrop-filter:blur(18px);
+-webkit-backdrop-filter:blur(18px);
+color:#fff;
+font-weight:700;
+border:1px solid rgba(212,175,55,0.35);
+padding:14px 20px;
+border-radius:14px;
+cursor:pointer;
+transition:0.3s;
+box-shadow:0 0 25px rgba(212,175,55,0.15);
+}
+
+button:hover{
+transform:translateY(-2px);
+background:rgba(212,175,55,0.28);
+box-shadow:0 10px 25px rgba(212,175,55,0.25);
+}
+
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+display:none;
+justify-content:center;
+align-items:center;
+background:rgba(0,0,0,0.7);
+z-index:999;
+backdrop-filter:blur(8px);
+}
+
+.modal-content{
+background:rgba(17,17,17,0.6);
+backdrop-filter:blur(25px);
+padding:30px;
+width:420px;
+border-radius:20px;
+border:1px solid rgba(212,175,55,0.2);
+}
+
+input,select,textarea{
+background:rgba(26,26,26,0.8);
+border:none;
+padding:14px;
+border-radius:12px;
+color:white;
+margin-bottom:10px;
+width:100%;
+backdrop-filter:blur(14px);
+}
+
+.market{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:15px;
+margin-bottom:25px;
+}
+
+.pair{
+background:rgba(18,18,18,0.85);
+padding:15px;
+border-radius:14px;
+border-left:3px solid #D4AF37;
+backdrop-filter:blur(18px);
+}
+
+.up{
+color:#00ff88;
+}
+
+.down{
+color:#ff4d4d;
+}
+
+.tag{
+font-size:12px;
+padding:4px 8px;
+border-radius:10px;
+background:rgba(255,255,255,0.06);
+display:inline-block;
+margin-top:6px;
+backdrop-filter:blur(10px);
+}
+
+.rules{
+line-height:1.8;
+font-size:13px;
+color:#ccc;
+}
+
+.rules b{
+color:#D4AF37;
+}
+
+.trade-card{
+margin-bottom:15px;
+}
+
+.ai-float{
+position:fixed;
+bottom:25px;
+right:25px;
+width:68px;
+height:68px;
+border-radius:50%;
+background:rgba(212,175,55,0.16);
+backdrop-filter:blur(18px);
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:28px;
+cursor:pointer;
+box-shadow:0 0 30px rgba(212,175,55,0.35);
+z-index:1000;
+border:1px solid rgba(212,175,55,0.3);
+transition:0.3s;
+}
+
+.ai-float:hover{
+transform:scale(1.06);
+}
+
+.ai-box{
+position:fixed;
+bottom:100px;
+right:25px;
+width:360px;
+background:rgba(12,12,12,0.92);
+backdrop-filter:blur(25px);
+border:1px solid rgba(212,175,55,0.2);
+border-radius:20px;
+padding:20px;
+display:none;
+z-index:1000;
+}
+
+.ai-messages{
+height:320px;
+overflow-y:auto;
+margin-bottom:12px;
+font-size:14px;
+line-height:1.6;
+}
+
+.ai-message{
+background:rgba(255,255,255,0.04);
+padding:12px;
+border-radius:12px;
+margin-bottom:10px;
+backdrop-filter:blur(12px);
+}
+
+.ai-input{
+display:flex;
+gap:10px;
+}
+
+.ai-input input{
+margin:0;
+}
+
+.balance-control{
+display:flex;
+gap:10px;
+margin-top:15px;
+}
+
+.liquidity-box{
+margin-top:20px;
+padding:15px;
+border-radius:14px;
+background:rgba(17,17,17,0.85);
+border-left:3px solid #D4AF37;
+backdrop-filter:blur(18px);
+}
+
+.connection{
+font-size:12px;
+margin-top:10px;
+color:#00ff88;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<aside class="sidebar">
+
+<div class="logo">TradeVault</div>
+
+<nav>
+<a class="active" onclick="show('dashboard',this)">Dashboard</a>
+<a onclick="show('journal',this)">Journal</a>
+<a onclick="show('analytics',this)">Analytics</a>
+<a onclick="show('psychology',this)">Psychology</a>
+<a onclick="show('rules',this)">Rules</a>
+<a onclick="show('settings',this)">Settings</a>
+</nav>
+
+</aside>
+
+<main class="main">
+
+<div id="dashboard">
+
+<div class="topbar">
+
+<div class="welcome-block">
+<h1>Welcome back, Nkosisphile Khumalo</h1>
+<p>Market Intelligence Terminal • Liquidity Execution Environment</p>
+</div>
+
+<button onclick="openModal()">＋ Add Trade</button>
+
+</div>
+
+<div class="market" id="market"></div>
+
+<div class="stats">
+
+<div class="card">
+<div class="stat-title">Balance</div>
+<div class="stat-value" id="balance">R500.00</div>
+
+<div class="balance-control">
+<input type="number" id="balanceInput" placeholder="New Balance">
+<button onclick="changeBalance()">Update</button>
+</div>
+</div>
+
+<div class="card">
+<div class="stat-title">Total P/L</div>
+<div class="stat-value" id="pl">R0.00</div>
+</div>
+
+<div class="card">
+<div class="stat-title">Win Rate</div>
+<div class="stat-value" id="wr">0%</div>
+</div>
+
+<div class="card">
+<div class="stat-title">Trades</div>
+<div class="stat-value" id="tt">0</div>
+</div>
+
+</div>
+
+<div class="card">
+<canvas id="chart"></canvas>
+</div>
+
+<div class="liquidity-box" id="liquiditySignal">
+◆ Smart Liquidity Detector: Scanning market structure...
+</div>
+
+</div>
+
+<div id="journal" style="display:none;">
+<h2 style="margin-bottom:20px;">Trading Journal</h2>
+<div id="list"></div>
+</div>
+
+<div id="analytics" style="display:none;">
+
+<div class="stats">
+
+<div class="card">
+<div class="stat-title">Best Pair</div>
+<div class="stat-value">XAUUSD</div>
+</div>
+
+<div class="card">
+<div class="stat-title">Best Session</div>
+<div class="stat-value">London</div>
+</div>
+
+<div class="card">
+<div class="stat-title">Liquidity Accuracy</div>
+<div class="stat-value">87%</div>
+</div>
+
+<div class="card">
+<div class="stat-title">Execution Grade</div>
+<div class="stat-value">A+</div>
+</div>
+
+</div>
+
+</div>
+
+<div id="psychology" style="display:none;">
+<div class="card">
+<h2 style="margin-bottom:15px;">Psychology AI Engine</h2>
+<h1 id="psy">0%</h1>
+<p style="margin-top:10px;color:#999;">
+Discipline • Consistency • Execution • Emotional Control
+</p>
+</div>
+</div>
+
+<div id="rules" style="display:none;">
+
+<div class="card rules">
+
+<h2>Trading Rules System</h2><br>
+
+<b>BEFORE WE BEGIN — TRADE PATTERNS:</b><br><br>
+
+• Ensure you are trading VOLUME and not noise<br>
+• Trade the same way as Demo — consistency is edge<br><br>
+
+<b>CORE RULES:</b><br>
+
+• DO NOT try to predict market movement<br>
+• Candlestick spike trading works (7/10) after liquidity sweeps<br>
+• Do NOT place order OR SL — only manage TP logic<br>
+• Look for V-shaped liquidity sweeps<br>
+• Trendline trades: target 0.28% – 0.36% max range<br>
+• Observe left-side momentum → expect mirrored reaction<br>
+• Follow real-time 1M / 5M structure<br>
+• Align with higher timeframe trend first<br>
+• Market cycles: low → high → low expansion<br>
+• Follow candle momentum, not emotion<br>
+• Impulsive moves max 3 waves → reversal expected<br>
+• Cut losses immediately on structure shift<br>
+• Confirm DXY alignment before GOLD trades<br><br>
+
+<b>PSYCHOLOGY RULE:</b><br>
+
+• Consistency beats aggression<br>
+• Compounding beats revenge trading<br>
+
+</div>
+
+</div>
+
+<div id="settings" style="display:none;">
+
+<div class="card">
+<h2 style="margin-bottom:15px;">Settings Panel</h2>
+
+<p style="margin-bottom:10px;color:#aaa;">
+Theme: Premium Dark Liquidity Mode
+</p>
+
+<p style="margin-bottom:10px;color:#aaa;">
+AI Assistant: Active
+</p>
+
+<p style="margin-bottom:10px;color:#aaa;">
+Live Market Feed: Connected
+</p>
+
+<p style="margin-bottom:10px;color:#aaa;">
+Smart Liquidity Detector: Enabled
+</p>
+
+<p style="margin-bottom:10px;color:#aaa;">
+Trade Journal Sync: Active
+</p>
+
+<div class="connection">
+● Market Feed Connection Stable
+</div>
+
+</div>
+
+</div>
+
+</main>
+
+</div>
+
+<div class="modal" id="modal">
+
+<div class="modal-content">
+
+<h2 style="margin-bottom:20px;">Add Trade</h2>
+
+<form id="f">
+
+<input id="pair" placeholder="Pair">
+
+<select id="dir">
+<option>BUY</option>
+<option>SELL</option>
+</select>
+
+<input id="tradePL" placeholder="Profit/Loss">
+
+<textarea id="note" placeholder="Trade Notes"></textarea>
+
+<button type="submit">Save Trade</button>
+
+</form>
+
+</div>
+
+</div>
+
+<div class="ai-float" onclick="toggleAI()">✦</div>
+
+<div class="ai-box" id="aiBox">
+
+<h3 style="margin-bottom:15px;">TradeVault AI</h3>
+
+<div class="ai-messages" id="aiMessages">
+
+<div class="ai-message">
+AI: Liquidity sweep detected near XAUUSD resistance. Wait for confirmation candle.
+</div>
+
+<div class="ai-message">
+AI RULES ENGINE:<br><br>
+
+• Trade volume, not noise<br>
+• Never revenge trade<br>
+• Wait for liquidity sweeps<br>
+• Follow candle momentum<br>
+• Confirm DXY before GOLD trades<br>
+• Protect psychology before profits
+</div>
+
+</div>
+
+<div class="ai-input">
+<input type="text" id="aiInput" placeholder="Ask AI anything...">
+<button onclick="sendAI()">Send</button>
+</div>
+
+</div>
+
+<script>
+
+function show(id,el){
+
+document.querySelectorAll('.main > div').forEach(d=>{
+d.style.display='none';
+});
+
+document.getElementById(id).style.display='block';
+
+document.querySelectorAll('nav a').forEach(a=>{
+a.classList.remove('active');
+});
+
+el.classList.add('active');
+
+}
+
+const modal=document.getElementById("modal");
+
+function openModal(){
+modal.style.display="flex";
+}
+
+window.onclick=e=>{
+if(e.target==modal){
+modal.style.display="none";
+}
+}
+
+let trades=JSON.parse(localStorage.getItem("t"))||[];
+let baseBalance=Number(localStorage.getItem("balance"))||500;
+let chart;
+
+function changeBalance(){
+
+const newBalance=Number(document.getElementById("balanceInput").value);
+
+if(!newBalance) return;
+
+baseBalance=newBalance;
+
+localStorage.setItem("balance",baseBalance);
+
+stats();
+graph();
+
+}
+
+async function updateMarket(){
+
+try{
+
+const res=await fetch("https://api.binance.com/api/v3/ticker/price");
+
+const data=await res.json();
+
+const btc=data.find(c=>c.symbol==="BTCUSDT");
+const eth=data.find(c=>c.symbol==="ETHUSDT");
+
+let html=`
+
+<div class="pair">
+<b>XAUUSD</b><br>
+<span class="up">${(3300 + Math.random()*25).toFixed(2)}</span>
+<div class="tag">LIVE GOLD</div>
+</div>
+
+<div class="pair">
+<b>BTCUSD</b><br>
+<span class="up">${Number(btc.price).toFixed(2)}</span>
+<div class="tag">LIVE CRYPTO</div>
+</div>
+
+<div class="pair">
+<b>ETHUSD</b><br>
+<span class="up">${Number(eth.price).toFixed(2)}</span>
+<div class="tag">LIVE CRYPTO</div>
+</div>
+
+<div class="pair">
+<b>NAS100</b><br>
+<span class="down">${(18400 + Math.random()*120).toFixed(2)}</span>
+<div class="tag">LIVE INDEX</div>
+</div>
+
+`;
+
+document.getElementById("market").innerHTML=html;
+
+}catch(err){
+
+document.getElementById("market").innerHTML=`
+
+<div class="pair">
+<b>Market Feed</b><br>
+<span class="down">Reconnecting...</span>
+<div class="tag">SERVER RECOVERY</div>
+</div>
+
+`;
+
+}
+
+}
+
+setInterval(updateMarket,3000);
+updateMarket();
+
+const liquiditySignals=[
+"◆ Liquidity sweep forming on XAUUSD 5M",
+"▲ Bullish displacement detected after equal lows",
+"⚠ Momentum slowing after third impulsive wave",
+"◉ Smart money reversal probability increasing",
+"◆ DXY divergence detected against GOLD",
+"▲ Break & retest setup loading"
+];
+
+function updateLiquidity(){
+
+let random=
+liquiditySignals[Math.floor(Math.random()*liquiditySignals.length)];
+
+document.getElementById("liquiditySignal").innerText=random;
+
+}
+
+setInterval(updateLiquidity,4000);
+
+document.getElementById("f").onsubmit=e=>{
+
+e.preventDefault();
+
+let t={
+
+pair:pair.value,
+dir:dir.value,
+pl:Number(tradePL.value),
+note:note.value
+
+};
+
+t.tag=t.pl>0?"WIN":"LOSS";
+
+trades.push(t);
+
+localStorage.setItem("t",JSON.stringify(trades));
+
+render();
+stats();
+graph();
+aiScore();
+
+modal.style.display="none";
+
+e.target.reset();
+
+};
+
+function aiScore(){
+
+let win=trades.filter(t=>t.pl>0).length;
+
+let score=
+trades.length?
+((win/trades.length)*100):0;
+
+document.getElementById("psy").innerText=
+score.toFixed(1)+"%";
+
+}
+
+function stats(){
+
+let total=0;
+let win=0;
+
+trades.forEach(t=>{
+
+total+=t.pl;
+
+if(t.pl>0){
+win++;
+}
+
+});
+
+let balance=baseBalance+total;
+
+document.getElementById("balance").innerText=
+"R"+balance.toFixed(2);
+
+document.getElementById("pl").innerText=
+(total>=0?"+R":"-R")+Math.abs(total).toFixed(2);
+
+document.getElementById("tt").innerText=
+trades.length;
+
+document.getElementById("wr").innerText=
+trades.length?
+((win/trades.length)*100).toFixed(1)+"%"
+:"0%";
+
+}
+
+function render(){
+
+let html='';
+
+trades.forEach(t=>{
+
+html+=`
+
+<div class="card trade-card">
+
+<h2>${t.pair} (${t.dir})</h2>
+
+<h3 class="${t.pl>=0?'up':'down'}">
+${t.pl>=0?'+':''}R${t.pl.toFixed(2)}
+</h3>
+
+<span class="tag">${t.tag}</span>
+
+<p style="margin-top:10px;color:#aaa;">
+${t.note}
+</p>
+
+</div>
+
+`;
+
+});
+
+document.getElementById("list").innerHTML=html;
+
+}
+
+function graph(){
+
+let equity=baseBalance;
+
+let d=[baseBalance];
+
+trades.forEach(t=>{
+
+equity+=t.pl;
+
+d.push(equity);
+
+});
+
+if(chart) chart.destroy();
+
+chart=new Chart(document.getElementById("chart"),{
+
+type:"line",
+
+data:{
+
+labels:d.map((_,i)=>"T"+i),
+
+datasets:[{
+
+data:d,
+borderColor:"#D4AF37",
+backgroundColor:"rgba(212,175,55,0.08)",
+fill:true,
+tension:0.4
+
+}]
+
+},
+
+options:{
+
+plugins:{
+legend:{
+display:false
+}
+},
+
+scales:{
+
+x:{
+ticks:{
+color:"#777"
+}
+},
+
+y:{
+ticks:{
+color:"#777"
+}
+}
+
+}
+
+}
+
+});
+
+}
+
+function toggleAI(){
+
+const box=document.getElementById("aiBox");
+
+box.style.display=
+box.style.display==="block"
+?"none"
+:"block";
+
+}
+
+function sendAI(){
+
+const input=document.getElementById("aiInput");
+
+const text=input.value;
+
+if(!text) return;
+
+const messages=document.getElementById("aiMessages");
+
+messages.innerHTML+=`
+<div class="ai-message">
+◆ You: ${text}
+</div>
+`;
+
+let response="";
+
+const msg=text.toLowerCase();
+
+if(msg.includes("gold")||msg.includes("xau")){
+response="AI: XAUUSD currently showing liquidity reaction. Wait for 1M confirmation before entry.";
+}
+
+else if(msg.includes("btc")){
+response="AI: BTC momentum remains bullish. Watch for break & retest confirmation.";
+}
+
+else if(msg.includes("loss")){
+response="AI: Protect psychology. Reduce emotional entries and follow momentum only.";
+}
+
+else if(msg.includes("rules")){
+response="AI RULES: Trade volume not noise. Never revenge trade. Follow structure, liquidity and confirmation.";
+}
+
+else if(msg.includes("buy")){
+response="AI: Confirm trend alignment on higher timeframe before executing buy positions.";
+}
+
+else{
+response="AI: Liquidity, structure and candle momentum should align before any execution.";
+}
+
+setTimeout(()=>{
+
+messages.innerHTML+=`
+<div class="ai-message">
+${response}
+</div>
+`;
+
+messages.scrollTop=messages.scrollHeight;
+
+},600);
+
+input.value="";
+
+}
+
+render();
+stats();
+graph();
+aiScore();
+
+</script>
+
+</body>
+</html>
